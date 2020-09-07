@@ -17,11 +17,9 @@ router.get('/', (req, res) => {
 })
 
 router.get('/:id', validateAccountId, (req, res) => {
-   
     res.status(200).json(req.account)
    
     // const { id } = req.params
-    
     // db('accounts')
     // .where({id: id})
     // .then(account => {
