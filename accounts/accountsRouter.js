@@ -16,19 +16,22 @@ router.get('/', (req, res) => {
     })
 })
 
-router.get('/:id', (req, res) => {
-    const { id } = req.params
+router.get('/:id', validateAccountId, (req, res) => {
+   
+    res.status(200).json(req.account)
+   
+    // const { id } = req.params
     
-    db('accounts')
-    .where({id: id})
-    .then(account => {
-        console.log(account)
-        res.status(200).json({ data: account })
-    })
-    .catch(error => {
-        console.log(error)
-        res.status(500).json({ message: error.message })
-    })
+    // db('accounts')
+    // .where({id: id})
+    // .then(account => {
+    //     console.log(account)
+    //     res.status(200).json({ data: account })
+    // })
+    // .catch(error => {
+    //     console.log(error)
+    //     res.status(500).json({ message: error.message })
+    // })
 })
 
 router.post('/', validateAccount, (req, res) => {
@@ -48,7 +51,44 @@ router.post('/', validateAccount, (req, res) => {
 
 })
 
+router.put('/:id', validateAccountId, validateAccount, (req, res) => {
+    const changes = req.body
+    const { id } = req.params
+   
+    db('accounts')
+    .where({ id: id})
+    .update(changes)
+    .then(count => {
+        console.log(count)
+        res.status(200).json({ message: 'account updated' })
+    })
+    .catch(error => {
+        console.log(error)
+        res.status(500).json({ message: error.message })
+    })
+})
 
+router.delete('/:id', validateAccountId, (req, res) => {
+    const { id } = req.params
+
+    db('accounts')
+    .where({ id: id})
+    .del()
+    .then(count => {
+        console.log(count)
+        if(count > 0) {
+        res.status(200).json({ message: 'account deleted' })
+        }
+    })
+    .catch(error => {
+        console.log(error)
+        res.status(500).json({ message: 'error deleting account' })
+    })
+})
+
+
+
+/******** custom middleware **********/
 
 function validateAccount(req, res, next) {
     const { name, budget } = req.body
@@ -60,6 +100,24 @@ function validateAccount(req, res, next) {
     } else {
         next()
     }
+}
+
+function validateAccountId(req, res, next) {
+    const { id } = req.params
+
+    db('accounts')
+    .where({id: id})
+    .then(account => {
+        if (account.length <= 0) {
+            res.status(404).json({ message: 'account not found'})
+        } else {
+            req.account = account
+            next()
+        }
+    })
+    .catch(error => {
+        res.status(500).json({ message: error.message })
+    })
 }
 
 module.exports = router
